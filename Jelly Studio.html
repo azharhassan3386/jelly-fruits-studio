@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jelly Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e9eef3;--panel:#f7f9fb;--text:#18212b;--muted:#5b6876;--line:#d3dbe4;
+  --plate:#fbfdff;--plate2:#d9e1ea;--btn:#18212b;--btnText:#ffffff;--shade:rgba(24,33,43,.28);
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f141a;--panel:#171e26;--text:#e8edf3;--muted:#93a1b0;--line:#2a3441;
+    --plate:#303c4a;--plate2:#1c2631;--btn:#e8edf3;--btnText:#0f141a;--shade:rgba(0,0,0,.55);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f141a;--panel:#171e26;--text:#e8edf3;--muted:#93a1b0;--line:#2a3441;
+  --plate:#303c4a;--plate2:#1c2631;--btn:#e8edf3;--btnText:#0f141a;--shade:rgba(0,0,0,.55);
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;min-height:100%;background:var(--bg);color:var(--text);
+  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",sans-serif;
+  display:flex;justify-content:center;
+}
+.app{width:100%;max-width:560px;padding:28px 16px 36px}
+h1{margin:0;font-size:clamp(2rem,8vw,2.8rem);font-weight:700;letter-spacing:-.03em;line-height:1}
+.sub{margin:.55rem 0 1.2rem;color:var(--muted);font-size:1rem;max-width:36ch}
+
+#stage{
+  --w:clamp(210px,58vw,280px);
+  --j1:#ff9fb0;--j2:#f0436b;--j3:#a8123a;
+  position:relative;height:390px;border-radius:28px;overflow:hidden;
+  background:radial-gradient(90% 70% at 50% 18%,var(--panel),var(--bg) 120%);
+  border:1px solid var(--line);touch-action:none;
+}
+#stage[data-flavor="lime"]{--j1:#d9ff98;--j2:#7fd62a;--j3:#357f0b}
+#stage[data-flavor="grape"]{--j1:#cdb0ff;--j2:#7a45e0;--j3:#3d1789}
+#stage[data-flavor="mango"]{--j1:#ffe595;--j2:#ffb01f;--j3:#c25e00}
+#stage[data-flavor="blueberry"]{--j1:#a6d4ff;--j2:#3b86f0;--j3:#12399a}
+
+.readout{position:absolute;top:16px;left:18px;right:18px;display:flex;justify-content:space-between;gap:12px;font-size:.95rem;z-index:3}
+.readout b{font-weight:700}
+.readout span{color:var(--muted)}
+
+.plate{
+  position:absolute;left:50%;bottom:26px;width:min(92%,430px);height:74px;transform:translateX(-50%);
+  border-radius:50%;
+  background:radial-gradient(60% 70% at 50% 35%,var(--plate),var(--plate2));
+  box-shadow:0 18px 24px -12px var(--shade),inset 0 -6px 10px rgba(0,0,0,.08);
+}
+.plate::after{content:"";position:absolute;inset:12px 14%;border-radius:50%;box-shadow:inset 0 3px 8px rgba(0,0,0,.12)}
+
+#melon,#slicePieces{
+  position:absolute;left:50%;bottom:64px;width:var(--w);height:calc(var(--w)*.78);
+  margin-left:calc(var(--w)/-2);transform-origin:50% 100%;will-change:transform;
+}
+#melon{cursor:grab;touch-action:none;transition:opacity .18s}
+#melon:active,#slicePieces:active{cursor:grabbing}
+#slicePieces{touch-action:none}
+.dome,.piece{
+  border-radius:50% 50% 40% 40% / 78% 78% 22% 22%;
+  background:radial-gradient(120% 95% at 34% 24%,var(--j1) 0%,var(--j2) 58%,var(--j3) 112%);
+  box-shadow:inset 0 -22px 34px -10px var(--j3),inset 0 16px 26px -12px rgba(255,255,255,.6),inset 0 0 0 1px rgba(255,255,255,.18),0 24px 26px -16px var(--shade);
+}
+#melon{border-radius:50% 50% 40% 40% / 78% 78% 22% 22%;background:radial-gradient(120% 95% at 34% 24%,var(--j1) 0%,var(--j2) 58%,var(--j3) 112%);box-shadow:inset 0 -22px 34px -10px var(--j3),inset 0 16px 26px -12px rgba(255,255,255,.6),inset 0 0 0 1px rgba(255,255,255,.18),0 24px 26px -16px var(--shade)}
+#melon::before,.piece::before{
+  content:"";position:absolute;left:14%;top:12%;width:34%;height:26%;border-radius:50%;
+  background:linear-gradient(150deg,rgba(255,255,255,.85),rgba(255,255,255,0) 75%);transform:rotate(-24deg);filter:blur(1px);
+}
+#melon::after{
+  content:"";position:absolute;left:62%;top:20%;width:7%;height:7%;border-radius:50%;background:rgba(255,255,255,.7);filter:blur(.5px)
+}
+.piece{position:absolute;inset:0;transform-origin:50% 100%;transition:transform .65s cubic-bezier(.3,1.5,.5,1)}
+.piece.left{clip-path:inset(-20px 50% -20px -20px)}
+.piece.right{clip-path:inset(-20px -20px -20px 50%)}
+.piece.left::after,.piece.right::after{content:"";position:absolute;top:14%;bottom:0;width:16px}
+.piece.left::after{left:calc(50% - 16px);background:linear-gradient(to right,transparent,rgba(255,255,255,.4))}
+.piece.right::after{left:50%;background:linear-gradient(to left,transparent,rgba(255,255,255,.4))}
+.piece.left.apart{transform:translateX(-26px) rotate(-4deg)}
+.piece.right.apart{transform:translateX(26px) rotate(4deg)}
+
+.glow{position:absolute;left:50%;bottom:58px;width:calc(var(--w)*1.2);height:44px;margin-left:calc(var(--w)*-.6);border-radius:50%;background:radial-gradient(closest-side,var(--j2),transparent);opacity:.55;filter:blur(10px)}
+#melon,.piece{
+  background:
+    radial-gradient(75% 60% at 50% 100%,rgba(255,255,255,.38),transparent 70%),
+    radial-gradient(60% 45% at 30% 28%,rgba(255,255,255,.18),transparent 70%),
+    radial-gradient(125% 100% at 38% 26%,var(--j1) 0%,var(--j2) 52%,var(--j3) 118%);
+  box-shadow:inset 0 -26px 36px -12px var(--j3),inset -14px 0 22px -14px var(--j3),inset 10px 0 18px -12px rgba(255,255,255,.35),inset 0 18px 28px -14px rgba(255,255,255,.7),inset 0 0 0 1px rgba(255,255,255,.22),0 26px 26px -18px var(--shade);
+}
+#melon::before,.piece::before{left:13%;top:10%;width:36%;height:22%;border-radius:60% 40% 55% 45%;filter:blur(.8px);background:linear-gradient(160deg,rgba(255,255,255,.95),rgba(255,255,255,.12) 70%)}
+.piece{transition:none}
+.piece::after{content:"";position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,transparent var(--l),rgba(255,255,255,.45) var(--l),transparent calc(var(--l) + 3.5%),transparent calc(var(--r) - 3.5%),rgba(0,0,0,.22) var(--r))}
+.knife{
+  position:absolute;left:50%;top:0;width:16px;height:300px;margin-left:-8px;opacity:0;
+  transform:translateY(-110%);pointer-events:none;z-index:4;
+}
+.knife::before{content:"";position:absolute;left:0;right:0;top:70px;bottom:0;border-radius:2px 2px 8px 8px;
+  background:linear-gradient(90deg,#b9c3cf,#f4f7fa 45%,#8f9cab);box-shadow:0 0 14px rgba(0,0,0,.25)}
+.knife::after{content:"";position:absolute;left:-3px;right:-3px;top:0;height:78px;border-radius:8px;
+  background:linear-gradient(90deg,#2b2f36,#4a505b 50%,#23272d)}
+.knife.cut{animation:cut .95s cubic-bezier(.5,0,.3,1) both}
+@keyframes cut{
+  0%{opacity:0;transform:translateY(-110%)}
+  12%{opacity:1}
+  46%{opacity:1;transform:translateY(8%)}
+  70%{opacity:1;transform:translateY(8%)}
+  100%{opacity:0;transform:translateY(-110%)}
+}
+
+.controls{margin-top:18px;display:grid;gap:14px}
+.flavours{display:flex;flex-wrap:wrap;gap:8px}
+.variety{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 14px 8px 10px;border-radius:999px;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:.95rem;cursor:pointer;
+}
+.variety i{width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--a),var(--b))}
+.variety.active{border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{
+  font:inherit;font-weight:600;font-size:1rem;padding:12px 22px;border-radius:14px;cursor:pointer;
+  border:1px solid var(--line);background:var(--panel);color:var(--text);
+}
+.btn.primary{background:var(--btn);color:var(--btnText);border-color:var(--btn);flex:1}
+#soundBtn{width:50px;padding:0;font-size:1.15rem}
+.btn:active,.variety:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid #3b86f0;outline-offset:2px}
+.chip{display:inline-flex;align-items:center;padding:8px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;font-size:.95rem;cursor:pointer}
+.chip.active{border-color:var(--text);box-shadow:inset 0 0 0 1px var(--text)}
+#stage[data-flavor="strawberry"]{--flesh:#ffc2c8}
+#stage[data-flavor="mango"]{--flesh:#ffd24a}
+#stage[data-flavor="grapes"]{--j1:#cdb0ff;--j2:#7a45e0;--j3:#3d1789;--flesh:#dcebb0}
+#stage[data-flavor="jelly"]{--j1:#d9ff98;--j2:#7fd62a;--j3:#357f0b}
+#stage:not([data-flavor="jelly"]) #melon,#stage:not([data-flavor="jelly"]) .piece{background:none;box-shadow:none;border-radius:0}
+#stage:not([data-flavor="jelly"]) #melon::before,#stage:not([data-flavor="jelly"]) #melon::after,#stage:not([data-flavor="jelly"]) .piece::before{display:none}
+#melon svg,.piece svg{display:block;filter:drop-shadow(0 10px 9px rgba(0,0,0,.3));pointer-events:none}
+.piece::after{background:linear-gradient(90deg,transparent var(--l,-10%),var(--flesh,rgba(255,255,255,.5)) var(--l,-10%),transparent calc(var(--l,-10%) + 4%),transparent calc(var(--r,110%) - 4%),var(--flesh,rgba(255,255,255,.5)) var(--r,110%)),linear-gradient(180deg,transparent var(--t,-10%),var(--flesh,rgba(255,255,255,.5)) var(--t,-10%),transparent calc(var(--t,-10%) + 5%),transparent calc(var(--b,110%) - 5%),var(--flesh,rgba(255,255,255,.5)) var(--b,110%));-webkit-mask-image:var(--mask,none);mask-image:var(--mask,none);-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.hint{margin:0;color:var(--muted);font-size:.9rem}
+@media (prefers-reduced-motion:reduce){.knife.cut{animation-duration:.01s}.piece{transition:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<radialGradient id="gS" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ff7d89"/><stop offset=".5" stop-color="#e3213f"/><stop offset="1" stop-color="#8a0e26"/></radialGradient>
+<linearGradient id="gM" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c9d94a"/><stop offset=".3" stop-color="#f7c21c"/><stop offset=".7" stop-color="#f58b1d"/><stop offset="1" stop-color="#d93a2a"/></linearGradient>
+<radialGradient id="gMb" cx=".75" cy=".8" r=".6"><stop offset="0" stop-color="#e0262b" stop-opacity=".75"/><stop offset="1" stop-color="#e0262b" stop-opacity="0"/></radialGradient>
+<radialGradient id="gG" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="#c9a2ff"/><stop offset=".55" stop-color="#6a2fc4"/><stop offset="1" stop-color="#27095e"/></radialGradient>
+<radialGradient id="gBl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#e8dcff" stop-opacity=".35"/></radialGradient>
+<linearGradient id="gL" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6ec24a"/><stop offset="1" stop-color="#2f7a2a"/></linearGradient>
+</defs></svg>
+<main class="app">
+  <h1>Jelly Studio</h1>
+  <p class="sub">Drag the jelly to feel it wobble, then slice it in two.</p>
+
+  <section id="stage" data-flavor="strawberry" aria-label="Jelly on a plate">
+    <div class="readout">
+      <b id="statusText">Whole strawberry</b>
+      <span>Pieces: <b id="pieceCount">1</b></span>
+    </div>
+    <div class="plate"></div>
+    <div class="glow"></div>
+    <div id="slicePieces"></div>
+    <div id="melon" role="img" aria-label="Jelly dome"></div>
+    <div class="knife" id="knife"></div>
+  </section>
+
+  <div class="controls">
+    <div class="flavours" role="group" aria-label="Cut style">
+      <button class="chip active" data-cut="slices">Slices</button>
+      <button class="chip" data-cut="wedges">Wedges</button>
+      <button class="chip" data-cut="cubes">Cubes</button>
+      <button class="chip" data-cut="diagonal">Diagonal</button>
+      <button class="chip" data-cut="halves">Halves</button>
+      <button class="chip" data-cut="layers">Layers</button>
+      <button class="chip" data-cut="zigzag">Zigzag</button>
+    </div>
+    <div class="flavours" role="group" aria-label="Flavour">
+      <button class="variety active" data-type="strawberry" data-name="strawberry" style="--a:#ff9fb0;--b:#d4204f"><i></i>Strawberry</button>
+      <button class="variety" data-type="jelly" data-name="jelly" style="--a:#d9ff98;--b:#4fa31a"><i></i>Jelly</button>
+      <button class="variety" data-type="grapes" data-name="grapes" style="--a:#cdb0ff;--b:#5b2cc2"><i></i>Grapes</button>
+      <button class="variety" data-type="mango" data-name="mango" style="--a:#ffe595;--b:#f09100"><i></i>Mango</button>
+      
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="sliceBtn">Slice</button>
+      <button class="btn" id="resetBtn">Reset</button>
+      <button class="btn" id="danceBtn">Dance on</button>
+      <button class="btn" id="styleBtn">Step: bounce</button>
+      <button class="btn" id="soundBtn" aria-label="Toggle sound">🔊</button>
+    </div>
+    <p class="hint">Keyboard: Space slices, R resets.</p>
+  </div>
+</main>
+
+<script>
+const stage = document.getElementById("stage");
+const melon = document.getElementById("melon");
+const knife = document.getElementById("knife");
+const slicePieces = document.getElementById("slicePieces");
+const statusText = document.getElementById("statusText");
+const pieceCount = document.getElementById("pieceCount");
+const soundBtn = document.getElementById("soundBtn");
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+let flavour = "strawberry", sliced = false, soundOn = true, audioCtx = null;
+let dragging = false, startX = 0, startY = 0;
+
+/* ---------- Sound ---------- */
+function audio(type){
+  if(!soundOn) return;
+  try{
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const c = audioCtx; if(c.state === "suspended") c.resume();
+    const t = c.currentTime, g = c.createGain(); g.connect(c.destination);
+    if(type === "slice"){
+      const b = c.createBuffer(1, c.sampleRate * .25, c.sampleRate), d = b.getChannelData(0);
+      for(let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      const n = c.createBufferSource(), f = c.createBiquadFilter();
+      n.buffer = b; f.type = "bandpass"; f.frequency.value = 1400; f.Q.value = .8;
+      n.connect(f); f.connect(g);
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + .22);
+      n.start(t);
+    }else{
+      const o = c.createOscillator(); o.type = "sine";
+      o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(90, t + .18);
+      o.connect(g);
+      g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.12, t + .02);
+      g.gain.exponentialRampToValueAtTime(.0001, t + .25);
+      o.start(t); o.stop(t + .28);
+    }
+  }catch(e){}
+}
+
+/* ---------- Spring physics (wobble) ---------- */
+const sp = {x:0,y:0,vx:0,vy:0,s:0,vs:0,tx:0,ty:0,ts:0};
+let running = false;
+
+function render(){
+  const sx = 1 + sp.s, sy = 1 - sp.s * 1.15, rot = sp.x / 14;
+  const t = `translate(${sp.x}px,${sp.y}px) scale(${sx},${sy}) rotate(${rot}deg)`;
+  melon.style.transform = t;
+  slicePieces.style.transform = t;
+}
+function tick(){
+  const dt = 1/60, k = 190, d = 8.5;
+  sp.vx += ((sp.tx - sp.x) * k - sp.vx * d) * dt;
+  sp.vy += ((sp.ty - sp.y) * k - sp.vy * d) * dt;
+  sp.vs += ((sp.ts - sp.s) * 260 - sp.vs * 7) * dt;
+  sp.x += sp.vx * dt; sp.y += sp.vy * dt; sp.s += sp.vs * dt;
+  render();
+  const still = Math.abs(sp.x) + Math.abs(sp.y) + Math.abs(sp.vx) + Math.abs(sp.vy) + Math.abs(sp.s) * 100 + Math.abs(sp.vs) * 10 < .05;
+  if(still && !dragging){
+    sp.x = sp.y = sp.s = sp.vx = sp.vy = sp.vs = 0; render(); running = false;
+  }else requestAnimationFrame(tick);
+}
+function run(){ if(reduce) return; if(!running){ running = true; requestAnimationFrame(tick); } }
+
+function drag(dx, dy){
+  sp.tx = Math.max(-90, Math.min(90, dx));
+  sp.ty = Math.max(-40, Math.min(30, dy));
+  sp.ts = Math.min(.1, Math.hypot(sp.tx, sp.ty) / 1100);
+  run();
+}
+function release(){
+  dragging = false; sp.tx = sp.ty = sp.ts = 0;
+  sp.vs -= 1.4;   // little extra jiggle on release
+  run(); audio("squish");
+}
+[melon, slicePieces].forEach(el => {
+  el.addEventListener("pointerdown", e => {
+    dragging = true; el.setPointerCapture(e.pointerId);
+    startX = e.clientX; startY = e.clientY; audio("squish");
+  });
+  el.addEventListener("pointermove", e => { if(dragging) drag(e.clientX - startX, e.clientY - startY); });
+  el.addEventListener("pointerup", release);
+  el.addEventListener("pointercancel", release);
+});
+
+/* ---------- State ---------- */
+function label(){
+  statusText.textContent = (sliced ? "Sliced " : "Whole ") + flavour;
+  pieceCount.textContent = sliced ? String(pieces.length) : "1";
+}
+function reset(){
+  sliced = false; melon.style.opacity = "1"; slicePieces.innerHTML = ""; pieces = [];
+  cancelAnimationFrame(danceRAF); label();
+  sp.vs = -1.2; run();
+}
+document.querySelectorAll(".variety").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".variety").forEach(x => x.classList.remove("active"));
+    btn.classList.add("active");
+    flavour = btn.dataset.name; setFruit(btn.dataset.type);
+    reset(); audio("squish");
+  });
+});
+
+/* ---------- Slice into 6 dancing pieces ---------- */
+let pieces = [], danceOn = true, amp = 0, spread = 0, danceRAF = 0, beat = 0;
+const N = 6, notes = [261.6, 293.7, 329.6, 392, 440, 523.3];
+function blip(f){
+  if(!soundOn || !audioCtx) return;
+  try{
+    const c = audioCtx, t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+    o.type = "sine"; o.frequency.value = f; o.connect(g); g.connect(c.destination);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.06, t + .015);
+    g.gain.exponentialRampToValueAtTime(.0001, t + .3);
+    o.start(t); o.stop(t + .32);
+  }catch(e){}
+}
+setInterval(() => { if(sliced && danceOn) blip(notes[beat++ % N]); }, 483);
+/* ---------- Fruit art (SVG) ---------- */
+let fruitName = "strawberry", artHTML = "";
+const GR = [[100,130],[83,104],[117,104],[66,76],[100,76],[134,76],[50,48],[83,48],[117,48],[150,48]];
+const FRUITS = {
+  strawberry:{d:"M100 148C70 130 38 98 40 66C42 40 66 30 100 36C134 30 158 40 160 66C162 98 130 130 100 148Z"},
+  mango:{d:"M40 90C38 52 78 26 118 32C156 38 176 66 168 96C160 128 120 140 84 132C56 126 42 112 40 90Z"},
+  grapes:{d:GR.map(([x, y]) => `M${x - 19} ${y}a19 19 0 1 0 38 0a19 19 0 1 0 -38 0`).join("")}
+};
+const ctx2 = document.createElement("canvas").getContext("2d");
+function inShape(d, x, y){ return ctx2.isPointInPath(new Path2D(d), x, y); }
+function art(n){
+  const d = FRUITS[n].d;
+  if(n === "strawberry"){
+    let s = `<rect x="97" y="6" width="6" height="24" rx="3" fill="#4a8a2a"/><path d="${d}" fill="url(#gS)"/>`;
+    for(let r = 0; r < 7; r++) for(let c = 0; c < 6; c++){
+      const x = 52 + c * 19 + (r % 2) * 9.5, y = 54 + r * 13;
+      if(inShape(d, x, y) && inShape(d, x - 8, y) && inShape(d, x + 8, y) && inShape(d, x, y + 8))
+        s += `<ellipse cx="${x}" cy="${y}" rx="2.3" ry="3.3" fill="#ffe7a0" stroke="#7a0c20" stroke-opacity=".45" stroke-width=".9" transform="rotate(${(x - 100) / 4} ${x} ${y})"/>`;
+    }
+    s += `<ellipse cx="76" cy="62" rx="12" ry="6" fill="#fff" opacity=".4" transform="rotate(-35 76 62)"/>`;
+    return s + [-75, -38, 0, 38, 75].map(a => `<ellipse cx="100" cy="30" rx="8" ry="17" fill="url(#gL)" transform="rotate(${a} 100 40)"/>`).join("");
+  }
+  if(n === "mango"){
+    return `<path d="${d}" fill="url(#gM)"/><path d="${d}" fill="url(#gMb)"/><ellipse cx="80" cy="58" rx="24" ry="9" fill="#fff" opacity=".33" transform="rotate(-28 80 58)"/>`
+      + [[70,92],[112,80],[134,106],[92,112],[142,70],[62,72]].map(p => `<circle cx="${p[0]}" cy="${p[1]}" r="1.7" fill="#fff3b0" opacity=".6"/>`).join("")
+      + `<path d="M114 34c0-10 4-17 10-21" stroke="#6b5a1e" stroke-width="5" stroke-linecap="round" fill="none"/><path d="M124 18c16-14 38-12 50-2c-16 10-36 12-50 2z" fill="url(#gL)"/>`;
+  }
+  return `<path d="M100 32V10M100 32L83 40M100 32L117 38" stroke="#5b4a2a" stroke-width="4" fill="none" stroke-linecap="round"/><path d="M104 14c14-10 34-10 46 2c-14 8-34 8-46-2z" fill="url(#gL)"/>`
+    + GR.map(([x, y]) => `<circle cx="${x}" cy="${y}" r="19" fill="url(#gG)"/><circle cx="${x}" cy="${y}" r="19" fill="url(#gBl)"/><ellipse cx="${x - 7}" cy="${y - 8}" rx="6" ry="3.5" fill="#fff" opacity=".55" transform="rotate(-35 ${x - 7} ${y - 8})"/>`).join("");
+}
+function setFruit(n){
+  fruitName = n; stage.dataset.flavor = n;
+  if(FRUITS[n]){
+    artHTML = `<svg viewBox="0 0 200 156" width="100%" height="100%" aria-hidden="true">${art(n)}</svg>`;
+    const m = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 156"><path d="${FRUITS[n].d}"/></svg>`;
+    stage.style.setProperty("--mask", `url("data:image/svg+xml,${encodeURIComponent(m)}")`);
+  }else{ artHTML = ""; stage.style.removeProperty("--mask"); }
+  melon.innerHTML = artHTML;
+}
+function occupied(cx, cy, hw, hh){
+  if(fruitName === "jelly") return Math.pow((cx - 50) / 50, 2) + Math.pow((100 - cy) / 100, 2) <= 1;
+  const d = FRUITS[fruitName].d;
+  return [[0,0],[-.6,-.6],[.6,-.6],[-.6,.6],[.6,.6]].some(([a, b]) => inShape(d, (cx + a * hw) * 2, (cy + b * hh) * 1.56));
+}
+setFruit("strawberry");
+let cutMode = "slices";
+function cutPlan(mode){
+  const shapes = [], strokes = [], AR = .78, d2r = Math.PI / 180;
+  if(mode === "wedges" && fruitName !== "jelly"){
+    const n = 6, R = 260;
+    const pt = a => `${50 + R * Math.cos(a)}% ${50 - R * Math.sin(a) / AR}%`;
+    for(let i = 0; i < n; i++){
+      const a0 = i * 360 / n * d2r, a1 = (i + 1) * 360 / n * d2r, m = (a0 + a1) / 2;
+      shapes.push({clip:`polygon(50% 50%, ${pt(a0)}, ${pt(a1)})`, l:-10, r:110, origin:"50% 50%", dx:Math.cos(m), dy:-Math.sin(m)});
+    }
+    [0, 60, 120].forEach(a => strokes.push({x:50, rot:a, y:50}));
+  }else if(mode === "wedges"){
+    const n = 6, R = 230;
+    const pt = a => `${50 + R * Math.cos(a)}% ${100 - R * Math.sin(a) / AR}%`;
+    for(let i = 0; i < n; i++){
+      const a0 = i * 180 / n * d2r, a1 = (i + 1) * 180 / n * d2r, m = (a0 + a1) / 2;
+      shapes.push({clip:`polygon(50% 100%, ${pt(a0)}, ${pt(a1)})`, l:-10, r:110, origin:"50% 100%", dx:Math.cos(m), dy:-Math.sin(m) * .6});
+    }
+    for(let k = 1; k < n; k++) strokes.push({x:50, rot:90 - k * 180 / n, y:null});
+  }else if(mode === "cubes"){
+    const C = 4, Rw = 3;
+    for(let r = 0; r < Rw; r++) for(let c = 0; c < C; c++){
+      const cx = (c + .5) / C * 100, cy = (r + .5) / Rw * 100;
+      if(!occupied(cx, cy, 100 / C / 2, 100 / Rw / 2)) continue;
+      const top = r ? (r / Rw * 100) + "%" : "-30px", bot = r < Rw - 1 ? (100 - (r + 1) / Rw * 100) + "%" : "-30px";
+      const lft = c ? (c / C * 100) + "%" : "-30px", rgt = c < C - 1 ? (100 - (c + 1) / C * 100) + "%" : "-30px";
+      shapes.push({clip:`inset(${top} ${rgt} ${bot} ${lft})`, l:c / C * 100, r:(c + 1) / C * 100, t:r / Rw * 100, b:(r + 1) / Rw * 100, origin:`${cx}% ${(r + 1) / Rw * 100}%`, dx:(cx - 50) / 25, dy:(cy - 50) / 40});
+    }
+    [25, 50, 75].forEach(x => strokes.push({x, rot:0, y:null}));
+    [66.7, 33.3].forEach(y => strokes.push({x:50, rot:90, y}));
+  }else if(mode === "halves"){
+    shapes.push({clip:"inset(-30px 50% -30px -30px)", l:-10, r:50, origin:"25% 100%", dx:-1.5, dy:0},
+                {clip:"inset(-30px -30px -30px 50%)", l:50, r:110, origin:"75% 100%", dx:1.5, dy:0});
+    strokes.push({x:50, rot:0, y:null});
+  }else if(mode === "layers"){
+    for(let i = 0; i < 4; i++){
+      const tp = i ? (i * 25) + "%" : "-30px", bt = i < 3 ? (100 - (i + 1) * 25) + "%" : "-30px";
+      shapes.push({clip:`inset(${tp} -30px ${bt} -30px)`, l:-10, r:110, t:i * 25, b:(i + 1) * 25, origin:`50% ${(i + 1) * 25}%`, dx:i % 2 ? .4 : -.4, dy:(i - 1.5) * .7});
+    }
+    [75, 50, 25].forEach(y => strokes.push({x:50, rot:90, y}));
+  }else if(mode === "zigzag"){
+    const n = 6, ys = [-20, 0, 20, 40, 60, 80, 100, 120];
+    for(let i = 0; i < n; i++){
+      const Lp = ys.map((y, j) => i ? `${i / n * 100 + (j % 2 ? 4 : -4)}% ${y}%` : `-30% ${y}%`);
+      const Rp = ys.map((y, j) => i < n - 1 ? `${(i + 1) / n * 100 + (j % 2 ? 4 : -4)}% ${y}%` : `130% ${y}%`).reverse();
+      shapes.push({clip:`polygon(${Lp.concat(Rp).join(",")})`, l:-10, r:110, origin:`${(i + .5) / n * 100}% 100%`, dx:i - (n - 1) / 2, dy:0});
+    }
+    for(let i = 1; i < n; i++) strokes.push({x:i / n * 100, rot:i % 2 ? 6 : -6, y:null});
+  }else if(mode === "diagonal"){
+    const E = [-60, 18, 34, 50, 66, 82, 160], s = 30;
+    for(let i = 0; i < E.length - 1; i++){
+      shapes.push({clip:`polygon(${E[i] + s * .7}% -20%, ${E[i + 1] + s * .7}% -20%, ${E[i + 1] - s * .7}% 120%, ${E[i] - s * .7}% 120%)`, l:-10, r:110, origin:"50% 100%", dx:i - 2.5, dy:0});
+    }
+    for(let i = 1; i <= 5; i++) strokes.push({x:E[i] - s * .5, rot:21, y:null});
+  }else{
+    const n = 6;
+    for(let i = 0; i < n; i++){
+      const lf = i ? (i / n * 100) + "%" : "-30px", rt = i < n - 1 ? (100 - (i + 1) / n * 100) + "%" : "-30px";
+      shapes.push({clip:`inset(-30px ${rt} -30px ${lf})`, l:i / n * 100, r:(i + 1) / n * 100, origin:`${(i + .5) / n * 100}% 100%`, dx:i - (n - 1) / 2, dy:0});
+      if(i) strokes.push({x:i / n * 100, rot:0, y:null});
+    }
+  }
+  return {shapes, strokes};
+}
+document.querySelectorAll(".chip").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".chip").forEach(x => x.classList.remove("active"));
+  b.classList.add("active"); cutMode = b.dataset.cut; stopShow(); reset(); audio("squish");
+}));
+const DANCES = ["bounce", "wave", "spin", "shake", "disco", "wobble"];
+let danceStyle = 0;
+function dance(now){
+  const t = now / 1000, style = DANCES[danceStyle];
+  amp += ((danceOn ? 1 : 0) - amp) * .08;
+  spread += (1 - spread) * .12;
+  pieces.forEach((p, i) => {
+    const ph = i * .7;
+    let x = p.dx * 16 * spread, y = p.dy * 16 * spread, rot = 0, sx = 1, sy = 1;
+    if(style === "bounce"){
+      const w = Math.sin(t * 6.5 + ph), hop = Math.abs(w), sq = (1 - hop) * .07 * amp;
+      y -= hop * 26 * amp; rot = w * 7 * amp; sx = 1 + sq; sy = 1 - sq * 1.3 + hop * .05 * amp;
+    }else if(style === "wave"){
+      const w = Math.sin(t * 4 - i * .9);
+      y -= (w * .5 + .5) * 34 * amp; x += Math.sin(t * 2 + i) * 10 * amp; rot = w * 5 * amp; sy = 1 + w * .06 * amp;
+    }else if(style === "spin"){
+      const a = t * 5 + i * .8;
+      sx = 1 - amp + amp * Math.cos(a); y -= Math.abs(Math.sin(a)) * 14 * amp;
+    }else if(style === "shake"){
+      rot = Math.sin(t * 22 + ph) * 10 * amp; x += Math.sin(t * 26 + ph) * 5 * amp;
+    }else if(style === "disco"){
+      const w = Math.sin(t * 6.5 + ph), hop = Math.abs(w);
+      y -= hop * 20 * amp; rot = w * 9 * amp; sx = 1 + Math.sin(t * 12 + ph) * .05 * amp;
+    }else if(style === "wobble"){
+      const w = Math.sin(t * 4.5 + ph), q = Math.sin(t * 9 + ph) * .12 * amp;
+      y -= Math.abs(w) * 10 * amp; rot = w * 4 * amp; sx = 1 + q; sy = 1 - q;
+    }
+    p.el.style.filter = style === "disco" ? `hue-rotate(${((t * 120 + i * 40) % 360) * amp}deg)` : "";
+    p.el.style.transform = `translate(${x}px,${y}px) rotate(${rot}deg) scale(${sx},${sy})`;
+  });
+  danceRAF = requestAnimationFrame(dance);
+}
+function slice(){
+  if(sliced) return;
+  sliced = true;
+  const L = melon.offsetLeft, W = melon.offsetWidth, T = melon.offsetTop, H = melon.offsetHeight;
+  const plan = cutPlan(cutMode), strokes = plan.strokes;
+  strokes.forEach((s, k) => {
+    setTimeout(() => {
+      const flat = s.y != null;
+      knife.style.left = (L + W * s.x / 100) + "px";
+      knife.style.top = flat ? (T + H * (1 - s.y / 100) - 150) + "px" : "0px";
+      knife.style.transformOrigin = flat ? "50% 50%" : "50% 100%";
+      knife.animate([
+        {opacity:0, transform:`rotate(${s.rot}deg) translateY(-110%)`},
+        {opacity:1, transform:`rotate(${s.rot}deg) translateY(${flat ? 0 : 6}%)`, offset:.5},
+        {opacity:0, transform:`rotate(${s.rot}deg) translateY(-110%)`}
+      ], {duration: reduce ? 20 : 260, easing:"ease-in-out"});
+      audio("slice");
+    }, reduce ? 0 : k * 200);
+  });
+  setTimeout(() => {
+    if(!sliced) return;
+    melon.style.opacity = "0";
+    slicePieces.innerHTML = ""; pieces = [];
+    plan.shapes.forEach(sh => {
+      const el = document.createElement("div");
+      el.className = "piece";
+      el.style.setProperty("--l", sh.l + "%");
+      el.style.setProperty("--r", sh.r + "%");
+      el.style.setProperty("--t", (sh.t ?? -10) + "%");
+      el.style.setProperty("--b", (sh.b ?? 110) + "%");
+      el.innerHTML = artHTML;
+      el.style.clipPath = sh.clip;
+      el.style.transformOrigin = sh.origin;
+      slicePieces.appendChild(el); pieces.push({el, dx: sh.dx, dy: sh.dy});
+    });
+    spread = 0; amp = 0; label();
+    sp.vs = 2; sp.vy = 30; run();
+    cancelAnimationFrame(danceRAF); danceRAF = requestAnimationFrame(dance);
+  }, reduce ? 30 : strokes.length * 200 + 300);
+}
+document.getElementById("danceBtn").onclick = e => {
+  danceOn = !danceOn; e.currentTarget.textContent = danceOn ? "Dance on" : "Dance off";
+};
+document.getElementById("styleBtn").onclick = e => {
+  danceStyle = (danceStyle + 1) % DANCES.length;
+  e.currentTarget.textContent = "Step: " + DANCES[danceStyle];
+};
+const SHOW = ["slices", "wedges", "cubes", "diagonal", "halves", "layers", "zigzag"];
+let showOn = false, showIdx = 0, showTimer = 0, shuffleTimer = 0;
+function shuffleDance(){
+  if(typeof DANCES === "undefined") return;
+  let n;
+  do{ n = Math.floor(Math.random() * DANCES.length); }while(n === danceStyle && DANCES.length > 1);
+  danceStyle = n;
+  const b = document.getElementById("styleBtn");
+  if(b) b.textContent = "Step: " + DANCES[n];
+}
+function stopShow(){
+  showOn = false; clearTimeout(showTimer); clearInterval(shuffleTimer);
+  document.getElementById("sliceBtn").textContent = "Slice";
+}
+function startShow(){
+  if(showOn) return;
+  if(sliced) reset();
+  showOn = true; showIdx = 0;
+  document.getElementById("sliceBtn").textContent = "Show on";
+  shuffleDance(); shuffleTimer = setInterval(shuffleDance, 1600);
+  nextCut();
+}
+function nextCut(){
+  if(!showOn) return;
+  cutMode = SHOW[showIdx++ % SHOW.length];
+  document.querySelectorAll(".chip").forEach(c => c.classList.toggle("active", c.dataset.cut === cutMode));
+  slice();
+  showTimer = setTimeout(() => {
+    if(!showOn) return;
+    reset();
+    showTimer = setTimeout(nextCut, 900);
+  }, 6500);
+}
+document.getElementById("sliceBtn").onclick = startShow;
+document.getElementById("resetBtn").onclick = () => { stopShow(); reset(); };
+soundBtn.onclick = () => { soundOn = !soundOn; soundBtn.textContent = soundOn ? "🔊" : "🔇"; };
+addEventListener("keydown", e => {
+  if(e.target.tagName === "BUTTON" && e.code === "Space") return;
+  if(e.code === "Space"){ e.preventDefault(); slice(); }  if(e.code === "Space"){ e.preventDefault(); startShow(); }
+  if(e.key === "r" || e.key === "R"){ stopShow(); reset(); }  if(e.key === "r" || e.key === "R") reset();
+});
+</script>
+</body>
+</html>
